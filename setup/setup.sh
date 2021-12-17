@@ -35,6 +35,7 @@ create_certificates()
     printf "====== Generating Certiticate Keystores ======\n"
     printf "=====================================================\n"
     echo "Creating p12 certificate keystores"
+    sed "s/HOST_IP/${MAIN_IP}/g" $CONFIG_DIR/instances-template.yml > $CONFIG_DIR/instances.yml
     bin/elasticsearch-certutil cert --silent --in $CONFIG_DIR/instances.yml --out $CERT_KEYSTORES_ZIP --ca $CA_P12 --ca-pass "" --pass ""
     unzip $CERT_KEYSTORES_ZIP -d $KEYSTORES_DIR
     echo "Creating crt and key certificates"

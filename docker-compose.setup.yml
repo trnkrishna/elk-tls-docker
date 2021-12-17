@@ -10,12 +10,13 @@ services:
       - ./swag:/swag/
       - ./secrets:/secrets/
       - ./setup/setup.sh:${ELASTIC_DIR}/config/setup.sh
-      - ./setup/instances.yml:${ELASTIC_DIR}/config/instances.yml:ro
+      - ./setup/instances-template.yml:${ELASTIC_DIR}/config/instances-template.yml:ro
     environment: 
       ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
       SUBDOMAIN: ${SUBDOMAIN}
       SUBFOLDER: ${SUBFOLDER}
       STAGING: ${STAGING}
+      MAIN_IP: ${MAIN_IP}
     networks: 
       - elk
 
