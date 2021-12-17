@@ -80,6 +80,16 @@ services:
         hard: 200000
     networks:
       - elk
+    healthcheck:
+      test: curl --cacert ${ELASTIC_DIR}/config/ca.crt -s https://localhost:9200 >/dev/null; if [[ $$? == 52 ]]; then echo 0; else echo 1; fi
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # wait_until_ready:
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:${ELK_VERSION}
+  #   command: /usr/bin/true
+  #   depends_on: {"elasticsearch": {"condition": "service_healthy"}}
 
   kibana:
     container_name: kibana
@@ -108,7 +118,7 @@ services:
       - "5601:5601"
     networks:
       - elk
-    depends_on: 
+    depends_on:
       - elasticsearch
 
   logstash:
@@ -154,131 +164,134 @@ services:
       - elasticsearch
       - kibana
   
-  packetbeat:
-    container_name: packetbeat
-    hostname: packetbeat
-    user: root
-    build:
-      context: packetbeat/
-      args:
-        ELK_VERSION: $ELK_VERSION
-    restart: unless-stopped
-    cap_add: 
-      - NET_ADMIN
-      - NET_RAW
-    command: packetbeat -e -strict.perms=false
-    volumes:
-      - ./packetbeat/config/packetbeat.yml:${PACKETBEAT_DIR}/packetbeat.yml:ro
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      CONFIG_DIR: ${PACKETBEAT_DIR}/config
-      ELASTIC_USERNAME: ${ELASTIC_USERNAME}
-      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
-      LS_JAVA_OPTS: "-Xmx${PACKETBEAT_HEAP} -Xms${PACKETBEAT_HEAP}"
-    secrets:
-    - source: ca.crt
-      target: /etc/pki/ca-trust/source/anchors/ca.crt
-    - source: packetbeat.cert
-      target: ${PACKETBEAT_DIR}/config/packetbeat.crt
-    - source: packetbeat.key
-      target: ${PACKETBEAT_DIR}/config/packetbeat.key
-    networks:
-      - elk
-    depends_on: 
-      - logstash
+  # packetbeat:
+  #   container_name: packetbeat
+  #   hostname: packetbeat
+  #   user: root
+  #   build:
+  #     context: packetbeat/
+  #     args:
+  #       ELK_VERSION: $ELK_VERSION
+  #   restart: unless-stopped
+  #   cap_add: 
+  #     - NET_ADMIN
+  #     - NET_RAW
+  #   command: packetbeat -e -strict.perms=false
+  #   volumes:
+  #     - ./packetbeat/config/packetbeat.yml:${PACKETBEAT_DIR}/packetbeat.yml:ro
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   environment:
+  #     CONFIG_DIR: ${PACKETBEAT_DIR}/config
+  #     ELASTIC_USERNAME: ${ELASTIC_USERNAME}
+  #     ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
+  #     LS_JAVA_OPTS: "-Xmx${PACKETBEAT_HEAP} -Xms${PACKETBEAT_HEAP}"
+  #   secrets:
+  #   - source: ca.crt
+  #     target: /etc/pki/ca-trust/source/anchors/ca.crt
+  #   - source: packetbeat.cert
+  #     target: ${PACKETBEAT_DIR}/config/packetbeat.crt
+  #   - source: packetbeat.key
+  #     target: ${PACKETBEAT_DIR}/config/packetbeat.key
+  #   networks:
+  #     - elk
+  #   depends_on: 
+  #     - logstash
 
-  metricbeat:
-    container_name: metricbeat
-    hostname: metricbeat
-    user: root
-    build:
-      context: metricbeat/
-      args:
-        ELK_VERSION: $ELK_VERSION
-    restart: unless-stopped
-    cap_add: 
-      - NET_ADMIN
-      - NET_RAW
-    command:
-      - /bin/bash
-      - -c
-      - while true; do metricbeat -e; sleep 1; done
-    volumes:
-      - ./metricbeat/config/metricbeat.yml:${METRICBEAT_DIR}/metricbeat.yml
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      CONFIG_DIR: ${METRICBEAT_DIR}/config
-      ELASTIC_USERNAME: ${ELASTIC_USERNAME}
-      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
-      LS_JAVA_OPTS: "-Xmx${METRICBEAT_HEAP} -Xms${METRICBEAT_HEAP}"
-    secrets:
-      - source: elastic-stack-ca.p12
-        target: /etc/pki/ca-trust/source/anchors/elastic-stack-ca.p12
-      - source: ca.crt
-        target: /etc/pki/ca-trust/source/anchors/ca.crt
-      - source: metricbeat.cert
-        target: ${METRICBEAT_DIR}/config/metricbeat.crt
-      - source: metricbeat.key
-        target: ${METRICBEAT_DIR}/config/metricbeat.key
-    networks:
-      - elk
-    depends_on: 
-      - logstash
+  # metricbeat:
+  #   container_name: metricbeat
+  #   hostname: metricbeat
+  #   user: root
+  #   build:
+  #     context: metricbeat/
+  #     args:
+  #       ELK_VERSION: $ELK_VERSION
+  #   restart: unless-stopped
+  #   cap_add: 
+  #     - NET_ADMIN
+  #     - NET_RAW
+  #   command:
+  #     - /bin/bash
+  #     - -c
+  #     - while true; do metricbeat -e; sleep 1; done
+  #   volumes:
+  #     - ./metricbeat/config/metricbeat.yml:${METRICBEAT_DIR}/metricbeat.yml
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   environment:
+  #     CONFIG_DIR: ${METRICBEAT_DIR}/config
+  #     ELASTIC_USERNAME: ${ELASTIC_USERNAME}
+  #     ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
+  #     LS_JAVA_OPTS: "-Xmx${METRICBEAT_HEAP} -Xms${METRICBEAT_HEAP}"
+  #   secrets:
+  #     - source: elastic-stack-ca.p12
+  #       target: /etc/pki/ca-trust/source/anchors/elastic-stack-ca.p12
+  #     - source: ca.crt
+  #       target: /etc/pki/ca-trust/source/anchors/ca.crt
+  #     - source: metricbeat.cert
+  #       target: ${METRICBEAT_DIR}/config/metricbeat.crt
+  #     - source: metricbeat.key
+  #       target: ${METRICBEAT_DIR}/config/metricbeat.key
+  #   networks:
+  #     - elk
+  #   depends_on: 
+  #     - logstash
 
-  filebeat:
-    container_name: filebeat
-    hostname: filebeat
-    build:
-      context: filebeat/
-      args:
-        ELK_VERSION: $ELK_VERSION
-    restart: unless-stopped
-    command: >
-      sh -c "filebeat -e"
-    volumes: 
-      - ./filebeat/config/filebeat.yml:${FILEBEAT_DIR}/filebeat.yml:ro
-    environment:
-      CONFIG_DIR: ${FILEBEAT_DIR}/config
-      LS_JAVA_OPTS: "-Xmx${FILEBEAT_HEAP} -Xms${FILEBEAT_HEAP}"
-      ELASTIC_USERNAME: ${ELASTIC_USERNAME}
-      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
-    secrets:
-      - source: ca.crt
-        target: ${FILEBEAT_DIR}/config/ca.crt
-      - source: filebeat.cert
-        target: ${FILEBEAT_DIR}/config/filebeat.crt
-      - source: filebeat.key
-        target: ${FILEBEAT_DIR}/config/filebeat.key
-    ports:
-      - "9000:9000" 
-    networks:
-      - elk
-    depends_on: 
-      - logstash
+  # filebeat:
+  #   container_name: filebeat
+  #   hostname: filebeat
+  #   build:
+  #     context: filebeat/
+  #     args:
+  #       ELK_VERSION: $ELK_VERSION
+  #   restart: unless-stopped
+  #   command: >
+  #     sh -c "filebeat -e"
+  #   volumes: 
+  #     - ./filebeat/config/filebeat.yml:${FILEBEAT_DIR}/filebeat.yml:ro
+  #   environment:
+  #     CONFIG_DIR: ${FILEBEAT_DIR}/config
+  #     LS_JAVA_OPTS: "-Xmx${FILEBEAT_HEAP} -Xms${FILEBEAT_HEAP}"
+  #     ELASTIC_USERNAME: ${ELASTIC_USERNAME}
+  #     ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
+  #   secrets:
+  #     - source: ca.crt
+  #       target: ${FILEBEAT_DIR}/config/ca.crt
+  #     - source: filebeat.cert
+  #       target: ${FILEBEAT_DIR}/config/filebeat.crt
+  #     - source: filebeat.key
+  #       target: ${FILEBEAT_DIR}/config/filebeat.key
+  #   ports:
+  #     - "9000:9000" 
+  #   networks:
+  #     - elk
+  #   depends_on: 
+  #     - logstash
 
   elastic-agent:
     container_name: elastic-agent
     hostname: elastic-agent
     build:
-      context: elastic-agent/
+      context: .
+      dockerfile: elastic-agent/Dockerfile
       args:
         ELK_VERSION: $ELK_VERSION
     restart: unless-stopped
     environment:
-      FLEET_CA: '/ca.crt'
+      # FLEET_CA: '/ca.crt'
       ELK_VERSION: ${ELK_VERSION}
       KIBANA_HOST: "https://kibana:5601"
+      KIBANA_USERNAME: ${ELASTIC_USERNAME}
+      KIBANA_PASSWORD: ${ELASTIC_PASSWORD}
+      ELASTICSEARCH_HOST: "https://elasticsearch:9200"
       ELASTICSEARCH_USERNAME: ${ELASTIC_USERNAME}
       ELASTICSEARCH_PASSWORD: ${ELASTIC_PASSWORD}
-      ELASTICSEARCH_HOSTS: "https://elasticsearch:9200"
-      FLEET_ENROLL_INSECURE: 1
-      ENROLL_FORCE: 1
-      PREFLIGHT_CHECK: 1
-    secrets:
-      - source: ca.crt
-        target: /ca.crt
+      # FLEET_ENROLL_INSECURE: 1
+      KIBANA_FLEET_SETUP: 1
+      FLEET_SERVER_ENABLE: 1
+      # FLEET_SERVER_INSECURE_HTTP: 1
+      # ENROLL_FORCE: 1
+      # PREFLIGHT_CHECK: 1
     ports:
-      - "22:22" 
+      - "8220:8220" 
     networks:
       - elk
     depends_on: 
