@@ -1,3 +1,36 @@
+# Steps
+1. Set the environment file
+```sh
+cp .env-example .env
+```
+
+2. Set your IP in variable `MAIN_IP` in `.env` file. Note: On this IP, kibana & all services will be accessible.
+```
+MAIN_IP="192.168.154.135"
+```
+
+3. Remove any images that have been built
+```sh
+docker rmi -f $(docker images -f "dangling=true" -q)
+docker rmi $(docker images --format "{{.Repository}}:{{.Tag}}" | grep "elk-tls-docker")
+```
+
+4. Start the containers
+```sh
+docker-compose up --build
+```
+
+5. Configure Fleet Server and Agents. Follow Step One and Two at this [link](https://github.com/watsoninfosec/ElasticXDR/tree/main/Deployment-Guide/FleetServer).
+
+6. If needed, stop & remove the containers and data store
+```sh
+docker-compose down -v
+```
+7. If needed, remove previously generated certificates
+```sh
+rm -rf secrets/*
+```
+
 # elk-tls-docker
 
 ![](https://raw.githubusercontent.com/wiki/swimlane/elk-tls-docker/images/elk-tls-docker-diagram.png)
