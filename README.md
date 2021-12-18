@@ -9,26 +9,32 @@ cp .env-example .env
 MAIN_IP="192.168.154.135"
 ```
 
-3. Remove any images that have been built
+3. Generate Self signed certificates
+```sh
+sudo rm -rf secrets/*
+docker-compose -f docker-compose.setup.yml run --rm certs
+```
+
+4. Remove any images that have been built
 ```sh
 docker rmi -f $(docker images -f "dangling=true" -q)
 docker rmi $(docker images --format "{{.Repository}}:{{.Tag}}" | grep "elk-tls-docker")
 ```
 
-4. Start the containers
+5. Start the containers
 ```sh
-docker-compose up --build
+sudo docker-compose up --build
 ```
 
-5. Configure Fleet Server and Agents. Follow Step One and Two at this [link](https://github.com/watsoninfosec/ElasticXDR/tree/main/Deployment-Guide/FleetServer).
+6. Configure Fleet Server and Agents. Follow Step One and Two at this [link](https://github.com/watsoninfosec/ElasticXDR/tree/main/Deployment-Guide/FleetServer).
 
-6. If needed, stop & remove the containers and data store
+7. If needed, stop & remove the containers and data store
 ```sh
-docker-compose down -v
+sudo docker-compose down -v
 ```
-7. If needed, remove previously generated certificates
+8. If needed, remove previously generated certificates
 ```sh
-rm -rf secrets/*
+sudo rm -rf secrets/*
 ```
 
 # elk-tls-docker

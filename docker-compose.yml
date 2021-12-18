@@ -266,9 +266,9 @@ services:
   #   depends_on: 
   #     - logstash
 
-  elastic-agent:
-    container_name: elastic-agent
-    hostname: elastic-agent
+  fleet-server:
+    container_name: fleet-server
+    hostname: fleet-server
     build:
       context: .
       dockerfile: elastic-agent/Dockerfile

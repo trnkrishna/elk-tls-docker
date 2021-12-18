@@ -4,34 +4,40 @@ instances:
       - elasticsearch
       - localhost
     ip:
-      - HOST_IP
+      - HOST_IP1
+      - HOST_IP2
   - name: kibana
     dns:
       - kibana
       - localhost
     ip:
-      - HOST_IP
+      - HOST_IP1
+      - HOST_IP2
   - name: logstash
     dns:
       - logstash
       - localhost
     ip:
-      - HOST_IP
+      - HOST_IP1
+      - HOST_IP2
   - name: filebeat
     dns:
       - filebeat
       - localhost
     ip:
-      - HOST_IP
+      - HOST_IP1
+      - HOST_IP2
   - name: metricbeat
     dns:
       - metricbeat
       - localhost
     ip:
-      - HOST_IP
+      - HOST_IP1
+      - HOST_IP2
   - name: packetbeat
     dns:
       - packetbeat
       - localhost
     ip:
-      - HOST_IP
+      - HOST_IP1
+      - HOST_IP2
