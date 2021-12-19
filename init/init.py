@@ -5,21 +5,19 @@ import os
 import shutil
 import time
 
-#############################################################
-# NOTE:
-# - THIS SCRIPT MUST BE EXECUTED FROM PROJECT ROOT DIRECTORY
-# - AND NOT INSIDE `init` DIRECTORY.
-#############################################################
+# Mandatory Variables
+MAIN_IP = os.environ.get("MAIN_IP", "kibana")
+PROJECT_PATH=os.getenv("PROJECT_PATH", "")
 
-# Variables
-IP = os.getenv("MAIN_IP1", "192.168.254.129")
-INSTALL_SCRIPTS_TEMPLATE_PATH = "init/templates/"
-CA_PATH = "secrets/certificate_authority/ca/ca.crt"
+# Derived and Non-Mandatory Variables
+KIBANA_IP = os.getenv("KIBANA_IP", "kibana")
+ES_IP = os.getenv("ES_IP", "elasticsearch")
+INSTALL_SCRIPTS_TEMPLATE_PATH = os.path.join(PROJECT_PATH, "init/templates/")
+CA_PATH = os.path.join(PROJECT_PATH, "secrets/certificate_authority/ca/ca.crt")
+INSTALL_SCRIPTS_FINAL_PATH = os.path.join(PROJECT_PATH, "init/agent-setups/")
+URL = "https://" + KIBANA_IP + ":5601/api/fleet"
 
-INSTALL_SCRIPTS_FINAL_PATH = "init/agent-setups/"
-URL = "https://" + IP + ":5601/api/fleet"
-
-# Suppress only the single warning from urllib3 needed.
+# Suppress on[ly the single warning from urllib3 needed.
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
 
@@ -74,13 +72,13 @@ def create_endpoint_security_integration(policy_id, namespace):
 
 def set_fleet_details():
     # Set ES details
-    data = {"hosts": ["https://" + IP + ":9200"], "config_yaml": ""}
+    data = {"hosts": ["https://" + MAIN_IP + ":9200"], "config_yaml": ""}
     r = get_request_session().put(url=URL + "/outputs/fleet-default-output", json=data)
     r.raise_for_status()
     print("Eleasticsearch details have been set in the fleet.")
 
     # Set Fleet Server details
-    data = {"fleet_server_hosts": ["https://" + IP + ":8220"]}
+    data = {"fleet_server_hosts": ["https://" + MAIN_IP + ":8220"]}
     r = get_request_session().put(url=URL + "/settings", json=data)
     r.raise_for_status()
     print("Fleet Server details have been set in the fleet.")
@@ -337,7 +335,7 @@ def create_agent_install_scripts_zip(enrollment_api_key):
         # print(script_path)
         with open(script_path, "r") as read_fd:
             script = read_fd.read()
-            script = script.replace("FLEET_SERVER_IP", IP)
+            script = script.replace("FLEET_SERVER_IP", MAIN_IP)
             script = script.replace("ENROLL_TOKEN", enrollment_api_key)
             script_path = os.path.join(INSTALL_SCRIPTS_FINAL_PATH, filename)
             with open(script_path, "w") as write_fd:
@@ -348,8 +346,10 @@ def create_agent_install_scripts_zip(enrollment_api_key):
 
     # Zip the folder
     zip_name = os.path.basename(os.path.normpath(INSTALL_SCRIPTS_FINAL_PATH))
+    zip_path = os.path.join(PROJECT_PATH, zip_name)
     root_dir = os.path.dirname(os.path.normpath(INSTALL_SCRIPTS_FINAL_PATH))
-    shutil.make_archive(zip_name, "zip", root_dir=root_dir, base_dir=zip_name)
+    # print(zip_path, root_dir, zip_name)
+    shutil.make_archive(zip_path, "zip", root_dir=root_dir, base_dir=zip_name)
 
     # Cleanup
     shutil.rmtree(INSTALL_SCRIPTS_FINAL_PATH)
@@ -388,10 +388,10 @@ def check_api(URL, service_name, response_field_name = "", response_field_value 
 
 
 def health_check():
-    ES_HEALTH_URL = "https://" + IP + ":9200/_cluster/health?wait_for_status=green&timeout=30s"
+    ES_HEALTH_URL = "https://" + ES_IP + ":9200/_cluster/health?wait_for_status=yellow&timeout=30s"
     check_api(ES_HEALTH_URL, "Elasticsearch")
 
-    KIBANA_HEALTH_URL = "https://" + IP + ":5601/api/task_manager/_health"
+    KIBANA_HEALTH_URL = "https://" + KIBANA_IP + ":5601/api/task_manager/_health"
     check_api(KIBANA_HEALTH_URL, "Kibana", "status", "OK")
 
     while True:
@@ -416,9 +416,9 @@ if __name__ == "__main__":
     create_endpoint_security_integration(win_agent_policy_id, "windows")
     create_windows_integration(win_agent_policy_id)
 
-    # print_all_policies()
+    # # print_all_policies()
 
-    # win_agent_policy_id = "c24e62d0-60ef-11ec-9617-572d96fbb613"
+    # win_agent_policy_id = "6293a320-610b-11ec-902e-a5106e40a7b3"
     enrollment_api_key = get_enrollment_api_key(win_agent_policy_id)
     create_agent_install_scripts_zip(enrollment_api_key)
 

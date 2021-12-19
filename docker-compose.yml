@@ -297,6 +297,20 @@ services:
     depends_on: 
       - logstash
 
+  init:
+    container_name: init
+    hostname: init
+    image: python:3
+    command: bash -c "pip3 install requests --quiet --disable-pip-version-check && python3 /opt/elk/init/init.py"
+    environment:
+      MAIN_IP: ${MAIN_IP1}
+      PYTHONUNBUFFERED: 1
+      PROJECT_PATH: "/opt/elk"
+    volumes:
+      - ./:/opt/elk
+    networks:
+      - elk
+
 networks:
   elk:
     driver: bridge
