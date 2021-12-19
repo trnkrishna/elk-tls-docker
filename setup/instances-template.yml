@@ -2,42 +2,42 @@ instances:
   - name: elasticsearch
     dns:
       - elasticsearch
-      - localhost
+      - localMAIN
     ip:
-      - HOST_IP1
-      - HOST_IP2
+      - MAIN_IP1
+      - MAIN_IP2
   - name: kibana
     dns:
       - kibana
-      - localhost
+      - localMAIN
     ip:
-      - HOST_IP1
-      - HOST_IP2
+      - MAIN_IP1
+      - MAIN_IP2
   - name: logstash
     dns:
       - logstash
-      - localhost
+      - localMAIN
     ip:
-      - HOST_IP1
-      - HOST_IP2
+      - MAIN_IP1
+      - MAIN_IP2
   - name: filebeat
     dns:
       - filebeat
-      - localhost
+      - localMAIN
     ip:
-      - HOST_IP1
-      - HOST_IP2
+      - MAIN_IP1
+      - MAIN_IP2
   - name: metricbeat
     dns:
       - metricbeat
-      - localhost
+      - localMAIN
     ip:
-      - HOST_IP1
-      - HOST_IP2
+      - MAIN_IP1
+      - MAIN_IP2
   - name: packetbeat
     dns:
       - packetbeat
-      - localhost
+      - localMAIN
     ip:
-      - HOST_IP1
-      - HOST_IP2
+      - MAIN_IP1
+      - MAIN_IP2

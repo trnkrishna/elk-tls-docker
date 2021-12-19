@@ -16,7 +16,8 @@ services:
       SUBDOMAIN: ${SUBDOMAIN}
       SUBFOLDER: ${SUBFOLDER}
       STAGING: ${STAGING}
-      MAIN_IP: ${MAIN_IP}
+      MAIN_IP1: ${MAIN_IP2}
+      MAIN_IP2: ${MAIN_IP2}
     networks: 
       - elk
 
