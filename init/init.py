@@ -3,7 +3,7 @@ from urllib3.exceptions import InsecureRequestWarning
 from requests.auth import HTTPBasicAuth
 import os
 import shutil
-import zipfile
+import time
 
 #############################################################
 # NOTE:
@@ -40,12 +40,12 @@ def get_default_system_policy_id():
     # extracting data in json format
     json_data = r.json()
 
+    default_system_policy_id = ""
     for policy in json_data["items"]:
         if policy["id"] == "default-system-policy":
             default_system_policy_id = policy["policy_id"]
             break
 
-    print("Default System Policy ID is", default_system_policy_id)
     return default_system_policy_id
 
 
@@ -354,9 +354,60 @@ def create_agent_install_scripts_zip(enrollment_api_key):
     # Cleanup
     shutil.rmtree(INSTALL_SCRIPTS_FINAL_PATH)
 
+    print('Created Elastic Agent Install Scripts zip "{}"'.format(zip_name+'.zip'))
+
+
+def check_api(URL, service_name, response_field_name = "", response_field_value = ""):
+    print("Checking if {} is ready.".format(service_name))
+    while True:
+        try:
+            r = get_request_session().get(URL)
+            if not r.ok:
+                print("{} is not yet ready, sleeping for 2s".format(service_name))
+                time.sleep(2)
+                continue
+            elif response_field_name and response_field_value:
+                if r.json()[response_field_name] != response_field_value:
+                    print("{} is not yet ready, sleeping for 2s".format(service_name))
+                    time.sleep(2)
+                    continue
+
+            print("===> {} is ready.\n".format(service_name))
+            return
+        except (requests.exceptions.HTTPError, requests.exceptions.ConnectionError, requests.exceptions.Timeout, requests.exceptions.RequestException) as err:
+            print("{} is not yet ready, sleeping for 5s".format(service_name))
+            time.sleep(5)
+        # except requests.exceptions.HTTPError as errh:
+        #     print ("HTTP Error:",errh)
+        # except requests.exceptions.ConnectionError as errc:
+        #     print ("Error Connecting:",errc)
+        # except requests.exceptions.Timeout as errt:
+        #     print ("Timeout Error:",errt)
+        # except requests.exceptions.RequestException as err:
+        #     print ("OOps: Something Else",err)
+
+
+def health_check():
+    ES_HEALTH_URL = "https://" + IP + ":9200/_cluster/health?wait_for_status=green&timeout=30s"
+    check_api(ES_HEALTH_URL, "Elasticsearch")
+
+    KIBANA_HEALTH_URL = "https://" + IP + ":5601/api/task_manager/_health"
+    check_api(KIBANA_HEALTH_URL, "Kibana", "status", "OK")
+
+    while True:
+        if get_default_system_policy_id() == "":
+            print("ELK is not yet ready, sleeping for 3s")
+            time.sleep(3)
+        else:
+            print("===> ELK is ready.\n\n")
+            break
+
 
 if __name__ == "__main__":
+    health_check()
+
     default_system_policy_id = get_default_system_policy_id()
+    print("Default System Policy ID is", default_system_policy_id)
     create_endpoint_security_integration(default_system_policy_id, "xdr")
     set_fleet_details()
 
@@ -365,8 +416,9 @@ if __name__ == "__main__":
     create_endpoint_security_integration(win_agent_policy_id, "windows")
     create_windows_integration(win_agent_policy_id)
 
-    print_all_policies()
+    # print_all_policies()
 
     # win_agent_policy_id = "c24e62d0-60ef-11ec-9617-572d96fbb613"
     enrollment_api_key = get_enrollment_api_key(win_agent_policy_id)
     create_agent_install_scripts_zip(enrollment_api_key)
+
